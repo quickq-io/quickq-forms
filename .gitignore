@@ -15,6 +15,9 @@ frontend/src/**/*.js
 # uv
 uv.lock
 
+# FHIR schema (downloaded by scripts/validate_fhir_fixtures.py)
+scripts/fhir.r4.schema.json
+
 # IDE
 .DS_Store
 .idea/

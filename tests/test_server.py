@@ -116,3 +116,28 @@ def test_post_response_in_progress(client):
     resp = c.post("/response", json=payload)
     assert resp.status_code == 201
     assert adapter.saved[0].status == "in-progress"
+
+
+def test_post_response_questionnaire_url_mismatch(client):
+    c, _ = client
+    payload = {
+        "resourceType": "QuestionnaireResponse",
+        "questionnaire": "http://example.com/wrong-instrument",
+        "status": "completed",
+        "item": [],
+    }
+    resp = c.post("/response", json=payload)
+    assert resp.status_code == 422
+    assert "mismatch" in resp.json()["detail"]
+
+
+def test_post_response_omitting_questionnaire_url_is_allowed(client):
+    # questionnaire field is optional — omitting it skips the URL check
+    c, _ = client
+    payload = {
+        "resourceType": "QuestionnaireResponse",
+        "status": "completed",
+        "item": [],
+    }
+    resp = c.post("/response", json=payload)
+    assert resp.status_code == 201
