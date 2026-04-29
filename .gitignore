@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+dist/
+.uv/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+# compiled TypeScript output (noEmit=true prevents regeneration)
+frontend/src/**/*.js
+
+# uv
+uv.lock
+
+# IDE
+.DS_Store
+.idea/
+.vscode/
