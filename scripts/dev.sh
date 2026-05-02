@@ -103,6 +103,18 @@ EOF
 
   echo "Starting API server (local adapter) on :$API_PORT  ($DB_PATH, questionnaire-id=$QUESTIONNAIRE_ID)"
   echo "  quickq source: $QUICKQ_ROOT"
+
+  # Ensure quickq is importable in this repo's uv venv. The PYTHONPATH below
+  # makes quickq's source tree visible, but it does NOT pull in quickq's
+  # runtime deps (rich_click, sqlglot, etc.). Without those the API child
+  # crashes immediately. Install quickq editable into our venv on first run
+  # so its deps land in the right place.
+  if ! uv pip show quickq >/dev/null 2>&1; then
+    echo "  Installing quickq into this venv (editable from $QUICKQ_ROOT)..."
+    uv pip install --quiet --editable "$QUICKQ_ROOT"
+    echo "  Done. (Subsequent runs skip this step.)"
+  fi
+
   PYTHONPATH="$QUICKQ_ROOT:$REPO_ROOT" uv run python -c "
 import sys
 sys.argv = ['quickq', 'serve', '$DB_PATH', '--questionnaire-id', '$QUESTIONNAIRE_ID', '--port', '$API_PORT', '--no-browser']

@@ -15,13 +15,12 @@ This is the dev.sh-specific counterpart to tests/e2e/test_pipeline.py
 exercise the dev.sh subprocess + venv + ports flow that beta testers
 actually hit).
 
-Skips if quickq is not importable in this venv. With quickq-io-7p6
-unfixed, that means a developer needs to run::
-
-    uv pip install --editable ../quickq
-
-inside quickq-forms's venv before this test will run. When 7p6 is
-fixed (dev.sh auto-installs quickq), this skip should disappear.
+Skips if quickq is not importable in this venv. dev.sh's first-run
+auto-install (added per quickq-io-7p6) puts quickq into this venv on
+the first invocation against a quickq sibling, so once a developer has
+run dev.sh once, this test runs on its own. The skip remains for the
+truly-fresh case where neither dev.sh nor a manual install has been
+done yet.
 
 Run locally:
     PYTHONPATH=../quickq uv run pytest tests/e2e/test_walkthrough_dev_sh.py -v
