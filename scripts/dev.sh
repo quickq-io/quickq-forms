@@ -7,6 +7,10 @@
 # Usage (local adapter — writes responses directly to study.db):
 #   bash scripts/dev.sh --db /path/to/study.db [--questionnaire-id 1] [--port 8000]
 #
+# Both modes invoke `quickq-forms serve …` from this repo's uv venv. Local-adapter
+# mode also requires `quickq` to be importable; pass --extra local to `uv sync`
+# (or `uv pip install ../quickq` for development) before running.
+#
 # Defaults to PHQ-9 fixture with file adapter if no arguments given.
 # Ctrl-C stops both servers.
 
@@ -44,36 +48,6 @@ trap cleanup EXIT INT TERM
 
 cd "$REPO_ROOT"
 
-# Locate the quickq source tree. dev.sh needs source access (not just the
-# installed CLI) because `quickq serve` cross-imports quickq-forms's `server`
-# module, and quickq-forms's uv venv does not have quickq installed.
-# Honors $QUICKQ_ROOT, then walks a list of common layouts.
-find_quickq_root() {
-  # Strict: an explicit QUICKQ_ROOT must point at a real quickq source tree.
-  # Falling back silently would make "wrong path" bugs hard to debug.
-  if [[ -n "${QUICKQ_ROOT:-}" ]]; then
-    if [[ -f "$QUICKQ_ROOT/quickq/cli.py" ]]; then
-      (cd "$QUICKQ_ROOT" && pwd)
-      return 0
-    fi
-    echo "error: QUICKQ_ROOT='$QUICKQ_ROOT' does not contain quickq/cli.py" >&2
-    return 1
-  fi
-
-  local candidates=(
-    "$REPO_ROOT/../quickq"
-    "$REPO_ROOT/../../quickq"
-  )
-  local c
-  for c in "${candidates[@]}"; do
-    if [[ -f "$c/quickq/cli.py" ]]; then
-      (cd "$c" && pwd)
-      return 0
-    fi
-  done
-  return 1
-}
-
 if [[ -n "$DB_PATH" ]]; then
   # Local adapter mode: write responses directly to study.db via quickq SDK
   if [[ ! -f "$DB_PATH" ]]; then
@@ -82,45 +56,9 @@ if [[ -n "$DB_PATH" ]]; then
   fi
   DB_PATH="$(cd "$(dirname "$DB_PATH")" && pwd)/$(basename "$DB_PATH")"
 
-  if ! QUICKQ_ROOT="$(find_quickq_root)"; then
-    cat >&2 <<EOF
-error: could not locate the quickq source tree.
-
-dev.sh's local-adapter mode needs the quickq SOURCE checkout (not just the
-installed \`quickq\` CLI), because \`quickq serve\` imports server modules from
-this repo and the installed CLI's venv does not have them.
-
-Set the QUICKQ_ROOT environment variable to your quickq clone, e.g.:
-
-    QUICKQ_ROOT=/path/to/quickq bash scripts/dev.sh --db /path/to/study.db
-
-Or clone quickq as a sibling of this repo:
-
-    cd $(cd "$REPO_ROOT/.." && pwd) && git clone https://github.com/quickq-io/quickq.git
-EOF
-    exit 1
-  fi
-
   echo "Starting API server (local adapter) on :$API_PORT  ($DB_PATH, questionnaire-id=$QUESTIONNAIRE_ID)"
-  echo "  quickq source: $QUICKQ_ROOT"
-
-  # Ensure quickq is importable in this repo's uv venv. The PYTHONPATH below
-  # makes quickq's source tree visible, but it does NOT pull in quickq's
-  # runtime deps (rich_click, sqlglot, etc.). Without those the API child
-  # crashes immediately. Install quickq editable into our venv on first run
-  # so its deps land in the right place.
-  if ! uv pip show quickq >/dev/null 2>&1; then
-    echo "  Installing quickq into this venv (editable from $QUICKQ_ROOT)..."
-    uv pip install --quiet --editable "$QUICKQ_ROOT"
-    echo "  Done. (Subsequent runs skip this step.)"
-  fi
-
-  PYTHONPATH="$QUICKQ_ROOT:$REPO_ROOT" uv run python -c "
-import sys
-sys.argv = ['quickq', 'serve', '$DB_PATH', '--questionnaire-id', '$QUESTIONNAIRE_ID', '--port', '$API_PORT', '--no-browser']
-from quickq.cli import main
-main()
-" &
+  uv run quickq-forms serve --db "$DB_PATH" --questionnaire-id "$QUESTIONNAIRE_ID" \
+    --port "$API_PORT" --no-browser &
   API_PID=$!
 else
   # File adapter mode: serve questionnaire JSON and write responses to disk
@@ -132,7 +70,7 @@ else
   QUESTIONNAIRE="$(cd "$(dirname "$QUESTIONNAIRE")" && pwd)/$(basename "$QUESTIONNAIRE")"
 
   echo "Starting API server (file adapter) on :$API_PORT  ($QUESTIONNAIRE)"
-  PYTHONPATH="$REPO_ROOT" uv run quickq-forms serve "$QUESTIONNAIRE" --port "$API_PORT" &
+  uv run quickq-forms serve "$QUESTIONNAIRE" --port "$API_PORT" --no-browser &
   API_PID=$!
 fi
 

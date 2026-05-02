@@ -3,8 +3,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from server.adapters.base import ResponseAdapter
-from server.models import QuestionnaireResponsePayload
+from quickq_forms.adapters.base import ResponseAdapter
+from quickq_forms.models import QuestionnaireResponsePayload
 
 _adapter: ResponseAdapter | None = None
 _questionnaire: dict | None = None   # cached at startup; one load per server process

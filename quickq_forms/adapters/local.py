@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from .base import ResponseAdapter
-from server.models import QuestionnaireResponsePayload
+from quickq_forms.models import QuestionnaireResponsePayload
 
 
 class LocalAdapter(ResponseAdapter):

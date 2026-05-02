@@ -27,8 +27,8 @@ quickq = pytest.importorskip("quickq", reason="quickq not installed — set PYTH
 from quickq.schema import init_oltp
 from quickq.parser_fhir import import_fhir
 
-from server.adapters.local import LocalAdapter
-from server.main import create_app
+from quickq_forms.adapters.local import LocalAdapter
+from quickq_forms.main import create_app
 
 FIXTURES = Path(__file__).parent.parent.parent / "frontend" / "src" / "__tests__" / "fixtures"
 GOUT_URL = "http://quickq.io/instruments/gout-checkin"

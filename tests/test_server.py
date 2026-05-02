@@ -4,9 +4,9 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
-from server.adapters.base import ResponseAdapter
-from server.models import QuestionnaireResponsePayload
-from server.main import create_app
+from quickq_forms.adapters.base import ResponseAdapter
+from quickq_forms.models import QuestionnaireResponsePayload
+from quickq_forms.main import create_app
 
 PHQ9_URL = "http://quickq.io/instruments/phq9"
 

@@ -4,8 +4,8 @@ import json
 import pytest
 from pathlib import Path
 
-from server.adapters.file import FileAdapter
-from server.models import QuestionnaireResponsePayload
+from quickq_forms.adapters.file import FileAdapter
+from quickq_forms.models import QuestionnaireResponsePayload
 
 
 MINIMAL_QUESTIONNAIRE = {

@@ -20,8 +20,8 @@ quickq = pytest.importorskip("quickq", reason="quickq not installed — set PYTH
 from quickq.schema import init_oltp
 from quickq.parser_fhir import import_fhir
 
-from server.adapters.local import LocalAdapter
-from server.models import QuestionnaireResponsePayload
+from quickq_forms.adapters.local import LocalAdapter
+from quickq_forms.models import QuestionnaireResponsePayload
 
 FIXTURES = Path(__file__).parent.parent / "frontend" / "src" / "__tests__" / "fixtures"
 GOUT_QUESTIONNAIRE = FIXTURES / "gout_checkin_fhir_questionnaire.json"

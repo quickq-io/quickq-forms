@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from server.models import QuestionnaireResponsePayload
+from quickq_forms.models import QuestionnaireResponsePayload
 
 
 class ResponseAdapter(ABC):

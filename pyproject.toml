@@ -19,10 +19,10 @@ local = [
 ]
 
 [project.scripts]
-quickq-forms = "server.cli:main"
+quickq-forms = "quickq_forms.cli:main"
 
-[tool.setuptools]
-packages = ["server"]
+[tool.setuptools.packages.find]
+include = ["quickq_forms*"]
 
 [dependency-groups]
 dev = [

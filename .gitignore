@@ -28,3 +28,4 @@ responses/
 .DS_Store
 .idea/
 .vscode/
+build/
