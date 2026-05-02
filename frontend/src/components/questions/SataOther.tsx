@@ -1,15 +1,15 @@
 import { useState } from 'react'
-import type { FormItem } from '../../types/form'
+import type { FormItem, AnswerValue } from '../../types/form'
 import { useFormStore } from '../../store/form_store'
+
+const EMPTY: AnswerValue[] = []
 
 interface Props {
   item: FormItem
 }
 
-// open-choice: coded checkboxes + a free-text "other" input.
-// Coded selections are stored as coding answers; free text as a string answer.
 export function SataOther({ item }: Props) {
-  const answers = useFormStore(s => s.answers.get(item.linkId) ?? [])
+  const answers = useFormStore(s => s.answers.get(item.linkId) ?? EMPTY)
   const setAnswer = useFormStore(s => s.setAnswer)
 
   const [otherText, setOtherText] = useState(() => {

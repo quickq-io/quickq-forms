@@ -1,12 +1,14 @@
 import { useFormStore } from '../../store/form_store'
-import type { FormItem } from '../../types/form'
+import type { FormItem, AnswerValue } from '../../types/form'
+
+const EMPTY: AnswerValue[] = []
 
 interface Props {
   item: FormItem
 }
 
 export function Text({ item }: Props) {
-  const answers = useFormStore(s => s.answers.get(item.linkId) ?? [])
+  const answers = useFormStore(s => s.answers.get(item.linkId) ?? EMPTY)
   const setAnswer = useFormStore(s => s.setAnswer)
   const clearAnswer = useFormStore(s => s.clearAnswer)
 

@@ -1,5 +1,7 @@
-import type { FormItem } from '../../types/form'
+import type { FormItem, AnswerValue } from '../../types/form'
 import { useFormStore } from '../../store/form_store'
+
+const EMPTY: AnswerValue[] = []
 
 interface Props {
   item: FormItem
@@ -7,7 +9,7 @@ interface Props {
 
 // Horizontal scale — same data model as SingleChoice but rendered as a row.
 export function Likert({ item }: Props) {
-  const answers = useFormStore(s => s.answers.get(item.linkId) ?? [])
+  const answers = useFormStore(s => s.answers.get(item.linkId) ?? EMPTY)
   const setAnswer = useFormStore(s => s.setAnswer)
   const clearAnswer = useFormStore(s => s.clearAnswer)
 

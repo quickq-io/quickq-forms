@@ -1,19 +1,18 @@
-import type { FormItem } from '../../types/form'
+import type { FormItem, AnswerValue } from '../../types/form'
 import { useFormStore } from '../../store/form_store'
+
+const EMPTY: AnswerValue[] = []
 
 interface Props {
   item: FormItem
 }
 
-// Numbered dropdowns — one per option. User assigns ranks 1-N.
-// Each rank can be used at most once (swaps with any previous holder).
 export function Ranked({ item }: Props) {
-  const answers = useFormStore(s => s.answers.get(item.linkId) ?? [])
+  const answers = useFormStore(s => s.answers.get(item.linkId) ?? EMPTY)
   const setAnswer = useFormStore(s => s.setAnswer)
 
   const options = item.options ?? []
 
-  // Derive rank map from stored answers (index = rank-1)
   const codeToRank = new Map<string, number>()
   answers.forEach((a, idx) => {
     if (a.type === 'coding' && a.coding.code) {
@@ -26,13 +25,11 @@ export function Ranked({ item }: Props) {
     if (rank === null) {
       next.delete(code)
     } else {
-      // Remove whoever currently holds this rank
       for (const [c, r] of next) {
         if (r === rank && c !== code) next.delete(c)
       }
       next.set(code, rank)
     }
-    // Rebuild answers in rank order
     const sorted = [...next.entries()]
       .sort(([, a], [, b]) => a - b)
       .map(([c]) => {
