@@ -75,7 +75,7 @@ The server core has no adapter-specific logic — adding a new persistence backe
 ## Related repos
 
 - **[quickq](https://github.com/quickq-io/quickq)** — the SDK + CLI; `quickq serve` shims into this package
-- **[quickq-docs](https://github.com/quickq-io/quickq-docs)** — published documentation site (in progress)
+- **[quickq-docs](https://github.com/quickq-io/quickq-docs)** — placeholder repo for documentation hosting; canonical mkdocs source is in `quickq/docs/`, published at <https://quickq-io.github.io/quickq/>
 
 ## License
 
