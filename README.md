@@ -4,6 +4,9 @@
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
+[![Status: beta](https://img.shields.io/badge/status-beta-orange.svg)](https://github.com/quickq-io/quickq-forms/issues)
+
+> **Status:** v0.1.x · beta. APIs may change before 1.0. Feedback welcome via [Issues](https://github.com/quickq-io/quickq-forms/issues).
 
 quickq-forms is the reference delivery layer for quickq studies. quickq exports a FHIR `Questionnaire`; quickq-forms renders that JSON as an interactive React form, collects FHIR `QuestionnaireResponse` payloads from respondents, and persists them via a swappable adapter (local SQLite, file dump, or future hosted backend). The complete contract between the two repos is FHIR R4.
 
