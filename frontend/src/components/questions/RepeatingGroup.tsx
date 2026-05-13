@@ -61,7 +61,10 @@ export function RepeatingGroup({ item }: Props) {
   )
 }
 
-// A child item scoped to a specific instance — proxies the store through the keyed linkId.
+// A child item scoped to a specific instance. Proxies the store through the
+// keyed linkId by rewriting `child.linkId` (and grid row linkIds) to the
+// `parent[i]:child` form. The serializer applies the inverse rewrite via
+// InstanceContext, so the stored shape and the emitted FHIR shape stay in sync.
 function InstanceChild({
   parent,
   child,
@@ -72,7 +75,15 @@ function InstanceChild({
   instanceIndex: number
 }) {
   const key = groupChildKey(parent.linkId, instanceIndex, child.linkId)
-  // Render as a Question but with a synthetic item pointing at the keyed linkId
   const proxiedItem: FormItem = { ...child, linkId: key }
+  if (child.type === 'grid' && child.gridConfig) {
+    proxiedItem.gridConfig = {
+      ...child.gridConfig,
+      rows: child.gridConfig.rows.map(row => ({
+        ...row,
+        linkId: groupChildKey(parent.linkId, instanceIndex, row.linkId),
+      })),
+    }
+  }
   return <Question item={proxiedItem} />
 }

@@ -99,10 +99,15 @@ export interface ResponseItem {
   item?: ResponseItem[]
 }
 
+export interface Reference {
+  reference?: string
+}
+
 export interface QuestionnaireResponse {
   resourceType: 'QuestionnaireResponse'
   questionnaire?: string
   status: 'completed' | 'in-progress' | 'amended' | 'stopped'
   authored?: string
+  subject?: Reference
   item: ResponseItem[]
 }

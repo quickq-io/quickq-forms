@@ -2,6 +2,17 @@ import { create } from 'zustand'
 import { evaluateAll, findAnswersToDiscard } from '../engine/skip_logic'
 import type { FormModel, FormState, AnswerValue } from '../types/form'
 
+// Wire-format for a draft: Maps are not directly JSON-serializable, so we
+// emit and accept the array-of-pairs form (`[...map.entries()]`). The
+// `questionnaireUrl` is checked at hydration time as a sanity guard against
+// loading a draft saved against a different questionnaire.
+export interface DraftPayload {
+  questionnaireUrl: string
+  savedAt: string
+  answers: Array<[string, AnswerValue[]]>
+  groupInstances: Array<[string, number]>
+}
+
 interface FormStore extends FormState {
   model: FormModel | null
 
@@ -10,6 +21,7 @@ interface FormStore extends FormState {
   clearAnswer: (linkId: string) => void
   addInstance: (parentLinkId: string) => void
   removeInstance: (parentLinkId: string, index: number) => void
+  hydrateFromDraft: (draft: DraftPayload) => void
   reset: () => void
 }
 
@@ -97,6 +109,22 @@ export const useFormStore = create<FormStore>((set, get) => ({
     set({ answers: nextAnswers, groupInstances: nextInstances })
   },
 
+  hydrateFromDraft: (draft) => {
+    const { model } = get()
+    if (!model) return
+    // If the draft was saved against a different questionnaire (e.g. the
+    // researcher edited the YAML after the respondent started filling),
+    // ignore the draft rather than risk loading state for linkIds that no
+    // longer exist.
+    if (draft.questionnaireUrl && draft.questionnaireUrl !== model.questionnaireUrl) {
+      return
+    }
+    const answers = new Map(draft.answers)
+    const groupInstances = new Map(draft.groupInstances)
+    set(recompute(model, answers))
+    set({ groupInstances })
+  },
+
   reset: () => {
     const { model } = get()
     if (!model) return
@@ -104,6 +132,19 @@ export const useFormStore = create<FormStore>((set, get) => ({
     set({ answers: new Map(), enabled, groupInstances: new Map() })
   },
 }))
+
+export function buildDraftPayload(state: {
+  model: FormModel
+  answers: Map<string, AnswerValue[]>
+  groupInstances: Map<string, number>
+}): DraftPayload {
+  return {
+    questionnaireUrl: state.model.questionnaireUrl,
+    savedAt: new Date().toISOString(),
+    answers: [...state.answers.entries()],
+    groupInstances: [...state.groupInstances.entries()],
+  }
+}
 
 // Utility: build the answer key for a child inside a repeating group
 export function groupChildKey(parentLinkId: string, instanceIndex: number, childLinkId: string): string {

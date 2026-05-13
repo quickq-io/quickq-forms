@@ -24,9 +24,18 @@ class ResponseItem(BaseModel):
 ResponseItem.model_rebuild()
 
 
+class Reference(BaseModel):
+    """FHIR Reference subset — only the `reference` field is used by quickq."""
+    reference: str | None = None
+
+
 class QuestionnaireResponsePayload(BaseModel):
     resourceType: Literal["QuestionnaireResponse"]
     questionnaire: str | None = None
     status: Literal["completed", "in-progress", "amended", "stopped"]
     authored: str | None = None
+    # FHIR R4 subject — quickq's importer reads subject.reference to derive
+    # the respondent's external_id (e.g. "Patient/R042" → external_id="R042").
+    # Optional: anonymous submissions are still valid.
+    subject: Reference | None = None
     item: list[ResponseItem] = Field(default_factory=list)

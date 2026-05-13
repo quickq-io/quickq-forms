@@ -18,6 +18,8 @@ export type QuestionType =
   | 'slider'
   | 'ranked'
   | 'repeating_group'
+  | 'section'      // plain FHIR group: structural container, renders as header + children
+  | 'instruction'  // FHIR display item: static text, no input, no answer
 
 export interface ResponseOption {
   code: string
@@ -84,6 +86,7 @@ export interface FormItem {
 export interface FormModel {
   questionnaireUrl: string
   title: string
+  description?: string
   // top-level items in display order; grid sub-rows are inside gridConfig
   items: FormItem[]
 }

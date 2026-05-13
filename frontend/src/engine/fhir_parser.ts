@@ -62,6 +62,11 @@ function detectType(item: QuestionnaireItem): QuestionType {
     return 'repeating_group'
   }
 
+  // plain group (no itemControl, no repeats): structural section
+  if (type === 'group') {
+    return 'section'
+  }
+
   // sata_other: open-choice
   if (type === 'open-choice') {
     return 'sata_other'
@@ -81,7 +86,7 @@ function detectType(item: QuestionnaireItem): QuestionType {
     case 'integer':  return 'numeric'
     case 'date':     return 'date'
     case 'dateTime': return 'datetime'
-    case 'group':    return 'single_choice' // unexpected plain group — treat as unsupported
+    case 'display':  return 'instruction'
     default:
       throw new Error(`Unsupported FHIR item type: ${type} (linkId: ${item.linkId})`)
   }
@@ -206,6 +211,7 @@ function parseItem(item: QuestionnaireItem): FormItem {
       break
 
     case 'repeating_group':
+    case 'section':
       base.children = (item.item ?? []).map(parseItem)
       break
 
@@ -213,7 +219,7 @@ function parseItem(item: QuestionnaireItem): FormItem {
     case 'text':
     case 'date':
     case 'datetime':
-      // no extra config needed
+    case 'instruction':
       break
   }
 
@@ -227,13 +233,12 @@ export function parseQuestionnaire(questionnaire: Questionnaire): FormModel {
     )
   }
 
-  const items = (questionnaire.item ?? [])
-    .filter(item => item.type !== 'display')
-    .map(parseItem)
+  const items = (questionnaire.item ?? []).map(parseItem)
 
   return {
     questionnaireUrl: questionnaire.url ?? '',
     title: questionnaire.title ?? questionnaire.name ?? '',
+    description: questionnaire.description,
     items,
   }
 }

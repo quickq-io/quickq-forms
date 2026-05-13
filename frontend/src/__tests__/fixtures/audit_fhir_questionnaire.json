@@ -1,0 +1,563 @@
+{
+  "resourceType": "Questionnaire",
+  "status": "active",
+  "title": "AUDIT",
+  "version": "2001",
+  "url": "http://quickq.io/instruments/audit",
+  "description": "Alcohol Use Disorders Identification Test \u2014 10-item WHO screening instrument (LOINC panel 72110-0)",
+  "date": "2026-05-13T01:35:30Z",
+  "name": "AUDIT",
+  "extension": [
+    {
+      "url": "https://quickq.io/fhir/StructureDefinition/scoring-rule",
+      "extension": [
+        {
+          "url": "name",
+          "valueString": "AUDIT Total"
+        },
+        {
+          "url": "formula",
+          "valueString": "sum"
+        },
+        {
+          "url": "description",
+          "valueString": "Sum of all 10 items. Scores 8+ indicate harmful or hazardous alcohol use."
+        }
+      ]
+    }
+  ],
+  "item": [
+    {
+      "linkId": "audit.q1",
+      "text": "How often do you have a drink containing alcohol?",
+      "type": "choice",
+      "answerOption": [
+        {
+          "valueCoding": {
+            "display": "Never",
+            "code": "LA6270-8",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Monthly or less",
+            "code": "LA18926-8",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "2-4 times a month",
+            "code": "LA18927-6",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "2-3 times a week",
+            "code": "LA18928-4",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "4 or more times a week",
+            "code": "LA18929-2",
+            "system": "http://loinc.org"
+          }
+        }
+      ],
+      "extension": [
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/likert",
+          "valueBoolean": true
+        },
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/source-instrument",
+          "valueString": "AUDIT"
+        },
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/source-item-id",
+          "valueString": "AUDIT1"
+        }
+      ]
+    },
+    {
+      "linkId": "audit.q2",
+      "text": "How many standard drinks containing alcohol do you have on a typical day when you are drinking?",
+      "type": "choice",
+      "answerOption": [
+        {
+          "valueCoding": {
+            "display": "1 or 2",
+            "code": "LA15694-5",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "3 or 4",
+            "code": "LA15695-2",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "5 or 6",
+            "code": "LA18930-0",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "7 to 9",
+            "code": "LA18931-8",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "10 or more",
+            "code": "LA18932-6",
+            "system": "http://loinc.org"
+          }
+        }
+      ],
+      "extension": [
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/likert",
+          "valueBoolean": true
+        },
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/source-instrument",
+          "valueString": "AUDIT"
+        },
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/source-item-id",
+          "valueString": "AUDIT2"
+        }
+      ]
+    },
+    {
+      "linkId": "audit.q3",
+      "text": "How often do you have six or more drinks on one occasion?",
+      "type": "choice",
+      "answerOption": [
+        {
+          "valueCoding": {
+            "display": "Never",
+            "code": "LA6270-8",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Less than monthly",
+            "code": "LA18933-4",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Monthly",
+            "code": "LA18876-5",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Weekly",
+            "code": "LA18891-4",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Daily or almost daily",
+            "code": "LA18934-2",
+            "system": "http://loinc.org"
+          }
+        }
+      ],
+      "extension": [
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/likert",
+          "valueBoolean": true
+        },
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/source-instrument",
+          "valueString": "AUDIT"
+        },
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/source-item-id",
+          "valueString": "AUDIT3"
+        }
+      ]
+    },
+    {
+      "linkId": "audit.q4",
+      "text": "How often during the last year have you found that you were not able to stop drinking once you had started?",
+      "type": "choice",
+      "answerOption": [
+        {
+          "valueCoding": {
+            "display": "Never",
+            "code": "LA6270-8",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Less than monthly",
+            "code": "LA18933-4",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Monthly",
+            "code": "LA18876-5",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Weekly",
+            "code": "LA18891-4",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Daily or almost daily",
+            "code": "LA18934-2",
+            "system": "http://loinc.org"
+          }
+        }
+      ],
+      "extension": [
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/likert",
+          "valueBoolean": true
+        },
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/source-instrument",
+          "valueString": "AUDIT"
+        },
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/source-item-id",
+          "valueString": "AUDIT4"
+        }
+      ]
+    },
+    {
+      "linkId": "audit.q5",
+      "text": "How often during the last year have you failed to do what was normally expected from you because of drinking?",
+      "type": "choice",
+      "answerOption": [
+        {
+          "valueCoding": {
+            "display": "Never",
+            "code": "LA6270-8",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Less than monthly",
+            "code": "LA18933-4",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Monthly",
+            "code": "LA18876-5",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Weekly",
+            "code": "LA18891-4",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Daily or almost daily",
+            "code": "LA18934-2",
+            "system": "http://loinc.org"
+          }
+        }
+      ],
+      "extension": [
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/likert",
+          "valueBoolean": true
+        },
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/source-instrument",
+          "valueString": "AUDIT"
+        },
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/source-item-id",
+          "valueString": "AUDIT5"
+        }
+      ]
+    },
+    {
+      "linkId": "audit.q6",
+      "text": "How often during the last year have you needed a first drink in the morning to get yourself going after a heavy drinking session?",
+      "type": "choice",
+      "answerOption": [
+        {
+          "valueCoding": {
+            "display": "Never",
+            "code": "LA6270-8",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Less than monthly",
+            "code": "LA18933-4",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Monthly",
+            "code": "LA18876-5",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Weekly",
+            "code": "LA18891-4",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Daily or almost daily",
+            "code": "LA18934-2",
+            "system": "http://loinc.org"
+          }
+        }
+      ],
+      "extension": [
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/likert",
+          "valueBoolean": true
+        },
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/source-instrument",
+          "valueString": "AUDIT"
+        },
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/source-item-id",
+          "valueString": "AUDIT6"
+        }
+      ]
+    },
+    {
+      "linkId": "audit.q7",
+      "text": "How often during the last year have you had a feeling of guilt or remorse after drinking?",
+      "type": "choice",
+      "answerOption": [
+        {
+          "valueCoding": {
+            "display": "Never",
+            "code": "LA6270-8",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Less than monthly",
+            "code": "LA18933-4",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Monthly",
+            "code": "LA18876-5",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Weekly",
+            "code": "LA18891-4",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Daily or almost daily",
+            "code": "LA18934-2",
+            "system": "http://loinc.org"
+          }
+        }
+      ],
+      "extension": [
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/likert",
+          "valueBoolean": true
+        },
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/source-instrument",
+          "valueString": "AUDIT"
+        },
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/source-item-id",
+          "valueString": "AUDIT7"
+        }
+      ]
+    },
+    {
+      "linkId": "audit.q8",
+      "text": "How often during the last year have you been unable to remember what happened the night before because you had been drinking?",
+      "type": "choice",
+      "answerOption": [
+        {
+          "valueCoding": {
+            "display": "Never",
+            "code": "LA6270-8",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Less than monthly",
+            "code": "LA18933-4",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Monthly",
+            "code": "LA18876-5",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Weekly",
+            "code": "LA18891-4",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Daily or almost daily",
+            "code": "LA18934-2",
+            "system": "http://loinc.org"
+          }
+        }
+      ],
+      "extension": [
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/likert",
+          "valueBoolean": true
+        },
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/source-instrument",
+          "valueString": "AUDIT"
+        },
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/source-item-id",
+          "valueString": "AUDIT8"
+        }
+      ]
+    },
+    {
+      "linkId": "audit.q9",
+      "text": "Have you or someone else been injured as a result of your drinking?",
+      "type": "choice",
+      "answerOption": [
+        {
+          "valueCoding": {
+            "display": "No",
+            "code": "LA32-8",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Yes, but not in the last year",
+            "code": "LA32279-4",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Yes, during the last year",
+            "code": "LA32280-2",
+            "system": "http://loinc.org"
+          }
+        }
+      ],
+      "extension": [
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/likert",
+          "valueBoolean": true
+        },
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/source-instrument",
+          "valueString": "AUDIT"
+        },
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/source-item-id",
+          "valueString": "AUDIT9"
+        }
+      ]
+    },
+    {
+      "linkId": "audit.q10",
+      "text": "Has a relative or friend, or a doctor or other health worker been concerned about your drinking or suggested you cut down?",
+      "type": "choice",
+      "answerOption": [
+        {
+          "valueCoding": {
+            "display": "No",
+            "code": "LA32-8",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Yes, but not in the last year",
+            "code": "LA32279-4",
+            "system": "http://loinc.org"
+          }
+        },
+        {
+          "valueCoding": {
+            "display": "Yes, during the last year",
+            "code": "LA32280-2",
+            "system": "http://loinc.org"
+          }
+        }
+      ],
+      "extension": [
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/likert",
+          "valueBoolean": true
+        },
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/source-instrument",
+          "valueString": "AUDIT"
+        },
+        {
+          "url": "https://quickq.io/fhir/StructureDefinition/source-item-id",
+          "valueString": "AUDIT10"
+        }
+      ]
+    }
+  ]
+}

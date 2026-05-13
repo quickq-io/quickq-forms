@@ -82,13 +82,19 @@ export function evaluateAll(
 ): Map<string, boolean> {
   const enabled = new Map<string, boolean>()
 
+  // enableWhen rules reference the bare linkId of the trigger question. The
+  // engine therefore evaluates against the bare-linkId answer map, which is
+  // correct for top-level items and grid rows. enableWhen on questions *inside*
+  // a repeating-group instance is intentionally not propagated per-instance:
+  // no real instrument in scope today uses it, and the per-instance keying
+  // would require either rewriting rules at parse time or threading an
+  // instance context through the engine. Revisit if a real fixture needs it.
   function walk(items: FormItem[]) {
     for (const item of items) {
       enabled.set(item.linkId, evaluateEnableWhen(item, answers))
       if (item.children) walk(item.children)
       if (item.gridConfig) {
         for (const row of item.gridConfig.rows) {
-          // grid row cells inherit the parent's enabled state
           enabled.set(row.linkId, enabled.get(item.linkId) ?? true)
         }
       }

@@ -7,6 +7,8 @@ import type { FormModel, FormState, AnswerValue } from '../types/form'
 
 import phq9Fixture from './fixtures/phq9_fhir_questionnaire.json'
 import goutFixture from './fixtures/gout_checkin_fhir_questionnaire.json'
+import prenatalFixture from './fixtures/prenatal_visits_fhir_questionnaire.json'
+import repeatingGridFixture from './fixtures/repeating_with_grid_fhir_questionnaire.json'
 
 const coding = (code: string, system?: string): AnswerValue => ({ type: 'coding', coding: { code, system } })
 const str = (value: string): AnswerValue => ({ type: 'string', value })
@@ -152,6 +154,103 @@ describe('serializeResponse — grid', () => {
     expect(grid.item).toHaveLength(2)
     expect(grid.item![0].linkId).toBe('gout.joint_severity.r0')
     expect(grid.item![0].answer![0]).toEqual({ valueCoding: { code: '0', system: undefined } })
+  })
+})
+
+describe('serializeResponse — repeating group', () => {
+  it('emits one parent item per instance, each with the same linkId', () => {
+    const model = parseQuestionnaire(prenatalFixture as Questionnaire)
+    const answers = new Map<string, AnswerValue[]>([
+      ['visit_count', [decimal(2)]],
+      ['visits[0]:visits.week', [decimal(12)]],
+      ['visits[0]:visits.provider', [coding('obgyn')]],
+      ['visits[0]:visits.concern', [bool(false)]],
+      ['visits[1]:visits.week', [decimal(20)]],
+      ['visits[1]:visits.provider', [coding('midwife')]],
+      ['visits[1]:visits.concern', [bool(true)]],
+    ])
+    const enabled = evaluateAll(model.items, answers)
+    const state: FormState = {
+      answers,
+      enabled,
+      groupInstances: new Map([['visits', 2]]),
+    }
+    const response = serializeResponse(model, state)
+    const visits = response.item.filter(i => i.linkId === 'visits')
+    expect(visits).toHaveLength(2)
+    // Instance 0
+    expect(visits[0].item).toHaveLength(3)
+    expect(visits[0].item!.find(c => c.linkId === 'visits.week')!.answer![0]).toEqual({
+      valueDecimal: 12,
+    })
+    expect(visits[0].item!.find(c => c.linkId === 'visits.provider')!.answer![0]).toEqual({
+      valueCoding: { code: 'obgyn', system: undefined },
+    })
+    expect(visits[0].item!.find(c => c.linkId === 'visits.concern')!.answer![0]).toEqual({
+      valueBoolean: false,
+    })
+    // Instance 1
+    expect(visits[1].item!.find(c => c.linkId === 'visits.week')!.answer![0]).toEqual({
+      valueDecimal: 20,
+    })
+    expect(visits[1].item!.find(c => c.linkId === 'visits.concern')!.answer![0]).toEqual({
+      valueBoolean: true,
+    })
+  })
+
+  it('emits no item entries for an instance with no answers', () => {
+    const model = parseQuestionnaire(prenatalFixture as Questionnaire)
+    const answers = new Map<string, AnswerValue[]>([
+      ['visits[0]:visits.week', [decimal(12)]],
+    ])
+    const enabled = evaluateAll(model.items, answers)
+    const state: FormState = {
+      answers,
+      enabled,
+      groupInstances: new Map([['visits', 2]]),
+    }
+    const response = serializeResponse(model, state)
+    const visits = response.item.filter(i => i.linkId === 'visits')
+    // Only instance 0 had answers; instance 1 is empty and is dropped
+    expect(visits).toHaveLength(1)
+    expect(visits[0].item).toHaveLength(1)
+  })
+})
+
+describe('serializeResponse — grid inside repeating group', () => {
+  it('serializes per-instance grid cells under the parent instance', () => {
+    const model = parseQuestionnaire(repeatingGridFixture as Questionnaire)
+    const answers = new Map<string, AnswerValue[]>([
+      ['rg.visits[0]:rg.visits.week', [decimal(1)]],
+      ['rg.visits[0]:rg.visits.severity.r0', [coding('0')]],
+      ['rg.visits[0]:rg.visits.severity.r1', [coding('1')]],
+      ['rg.visits[0]:rg.visits.severity.r2', [coding('2')]],
+      ['rg.visits[1]:rg.visits.week', [decimal(2)]],
+      ['rg.visits[1]:rg.visits.severity.r0', [coding('3')]],
+      ['rg.visits[1]:rg.visits.severity.r1', [coding('2')]],
+      ['rg.visits[1]:rg.visits.severity.r2', [coding('1')]],
+    ])
+    const enabled = evaluateAll(model.items, answers)
+    const state: FormState = {
+      answers,
+      enabled,
+      groupInstances: new Map([['rg.visits', 2]]),
+    }
+    const response = serializeResponse(model, state)
+    const visits = response.item.filter(i => i.linkId === 'rg.visits')
+    expect(visits).toHaveLength(2)
+
+    const grid0 = visits[0].item!.find(c => c.linkId === 'rg.visits.severity')!
+    expect(grid0).toBeDefined()
+    expect(grid0.item).toHaveLength(3)
+    expect(grid0.item!.find(c => c.linkId === 'rg.visits.severity.r0')!.answer![0]).toEqual({
+      valueCoding: { code: '0', system: undefined },
+    })
+
+    const grid1 = visits[1].item!.find(c => c.linkId === 'rg.visits.severity')!
+    expect(grid1.item!.find(c => c.linkId === 'rg.visits.severity.r0')!.answer![0]).toEqual({
+      valueCoding: { code: '3', system: undefined },
+    })
   })
 })
 
