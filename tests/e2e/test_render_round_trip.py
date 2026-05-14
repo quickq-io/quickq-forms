@@ -233,6 +233,37 @@ def _add_repeating_instance(page: Page, parent_link_id: str) -> None:
     btn.first.click()
 
 
+def _fill_slider(page: Page, link_id: str, value: int) -> None:
+    """Set a range input via the value setter and fire React's onChange.
+
+    Uses locator.evaluate so Playwright auto-waits for the element to exist
+    after React hydrates. The native value setter + dispatched input/change
+    events are what React's onChange handler listens for; calling
+    locator.fill() on a range input doesn't fire React's synthetic event.
+    """
+    page.locator(f'input[id="{link_id}"]').evaluate(
+        """
+        (el, val) => {
+          const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+          setter.call(el, String(val));
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        """,
+        value,
+    )
+
+
+def _set_ranked_position(page: Page, link_id: str, option_label: str, rank: int) -> None:
+    """For the Ranked component, find the row by option label and pick rank
+    N from its select. Each option is a flex row with a <select> next to a
+    <span>{display}</span>; targeting the span by partial text and then
+    its sibling select avoids matching the outer container."""
+    span = _question_locator(page, link_id).get_by_text(option_label, exact=False).first
+    select = span.locator("xpath=preceding-sibling::select[1]")
+    select.select_option(str(rank))
+
+
 def _submit(page: Page) -> None:
     page.locator('button:has-text("Submit")').click()
     expect(page.locator('text=Thank you')).to_be_visible(timeout=5000)
@@ -489,6 +520,305 @@ def test_description_renders_below_title_when_present(serve_fixture, page: Page)
         text = description.text_content() or ""
         assert len(text) > 0
     # Else: fixture has no description; the absence isn't a bug, just a no-op
+
+
+# ------------------------------------------------------------------
+# Question-type coverage — fills the remaining ⚪ cells in the
+# quickq-forms column of docs/internal/renderer-coverage.md
+# ------------------------------------------------------------------
+
+@pytest.mark.e2e
+def test_multiple_choice_emits_multiple_value_codings(serve_fixture, page: Page) -> None:
+    """Multi-select choice question (gout.attack_joints) emits one
+    valueCoding answer per selected option."""
+    url, out = serve_fixture("gout_checkin")
+    page.goto(url)
+    expect(page.locator("h1")).to_be_visible()
+
+    _check_multiple(page, "gout.attack_joints", ["Big toe", "Ankle", "Knee"])
+    _submit(page)
+    payload = _saved_response(out)
+
+    item = next(i for i in payload["item"] if i["linkId"] == "gout.attack_joints")
+    codes = {a["valueCoding"]["code"] for a in item["answer"]}
+    assert codes == {"big_toe", "ankle", "knee"}, f"got {codes}"
+
+
+@pytest.mark.e2e
+def test_sata_other_emits_codings_plus_value_string(serve_fixture, page: Page) -> None:
+    """sata_other (FHIR open-choice): selected checkboxes serialize as valueCoding,
+    free-text 'Other' field serializes as valueString in the same answer array."""
+    url, out = serve_fixture("prapare")
+    page.goto(url)
+    expect(page.locator("h1")).to_be_visible()
+
+    _check_multiple(page, "prapare.necessities", ["Food", "Medicine"])
+    page.locator('[data-link-id="prapare.necessities"] input[type="text"]').fill(
+        "Pet food"
+    )
+    _submit(page)
+    payload = _saved_response(out)
+
+    item = next(i for i in payload["item"] if i["linkId"] == "prapare.necessities")
+    codes = {a["valueCoding"]["code"] for a in item["answer"] if "valueCoding" in a}
+    strings = [a["valueString"] for a in item["answer"] if "valueString" in a]
+    assert "LA30125-1" in codes  # Food
+    assert "LA30128-5" in codes  # Medicine
+    assert strings == ["Pet food"]
+
+
+@pytest.mark.e2e
+def test_date_value_is_iso_yyyy_mm_dd(serve_fixture, page: Page) -> None:
+    """`type: date` renders as a date input and serializes valueDate."""
+    url, out = serve_fixture("gout_checkin")
+    page.goto(url)
+
+    _fill_date(page, "gout.last_attack_date", "2026-04-15")
+    _fill_date(page, "gout.uric_acid_date", "2026-04-01")
+    _submit(page)
+    payload = _saved_response(out)
+
+    items = {i["linkId"]: i for i in payload["item"]}
+    assert items["gout.last_attack_date"]["answer"][0] == {"valueDate": "2026-04-15"}
+    assert items["gout.uric_acid_date"]["answer"][0] == {"valueDate": "2026-04-01"}
+
+
+@pytest.mark.e2e
+def test_datetime_value_is_iso_with_time(serve_fixture, page: Page) -> None:
+    """`type: datetime` renders as datetime-local and serializes valueDateTime."""
+    url, out = serve_fixture("gout_checkin")
+    page.goto(url)
+
+    # datetime-local format is 'YYYY-MM-DDTHH:mm'
+    page.locator('input[id="gout.last_attack_datetime"]').fill("2026-04-15T08:30")
+    _submit(page)
+    payload = _saved_response(out)
+
+    item = next(i for i in payload["item"] if i["linkId"] == "gout.last_attack_datetime")
+    assert item["answer"][0] == {"valueDateTime": "2026-04-15T08:30"}
+
+
+@pytest.mark.e2e
+def test_likert_round_trips_as_value_coding(serve_fixture, page: Page) -> None:
+    """Likert items render as a horizontal scale; selecting one option emits
+    valueCoding with the LOINC code. AUDIT q1-q3 are dedicated likert questions."""
+    url, out = serve_fixture("audit")
+    page.goto(url)
+    expect(page.locator("h1")).to_be_visible()
+
+    # audit.q1: "Never" is option 0; q2: "1 or 2" is option 0; q3: option 1
+    _select_radio_by_index(page, "audit.q1", 0)
+    _select_radio_by_index(page, "audit.q2", 1)
+    _select_radio_by_index(page, "audit.q3", 2)
+    _submit(page)
+    payload = _saved_response(out)
+
+    items = {i["linkId"]: i for i in payload["item"]}
+    assert items["audit.q1"]["answer"][0]["valueCoding"]["code"] == "LA6270-8"
+    # q2 option 1 is "3 or 4"
+    assert items["audit.q2"]["answer"][0]["valueCoding"]["code"] == "LA15695-2"
+
+
+@pytest.mark.e2e
+def test_slider_round_trips_as_value_integer(serve_fixture, page: Page) -> None:
+    """Slider renders as a native range input; the value flows through
+    as valueInteger and lands in response_numeric on import."""
+    url, out = serve_fixture("gout_checkin")
+    page.goto(url)
+
+    _fill_slider(page, "gout.pain_vas", 7)
+    _submit(page)
+    payload = _saved_response(out)
+
+    item = next(i for i in payload["item"] if i["linkId"] == "gout.pain_vas")
+    assert item["answer"][0] == {"valueInteger": 7}
+
+
+@pytest.mark.e2e
+def test_ranked_emits_ordinal_value_extensions(serve_fixture, page: Page) -> None:
+    """Ranked: assign 1/2/3 to three options via per-row dropdowns;
+    each gets an ordinalValue extension in order."""
+    url, out = serve_fixture("gout_checkin")
+    page.goto(url)
+
+    _set_ranked_position(page, "gout.treatment_priorities", "Reducing pain", 1)
+    _set_ranked_position(page, "gout.treatment_priorities", "Preventing future", 2)
+    _set_ranked_position(page, "gout.treatment_priorities", "target uric acid", 3)
+    _submit(page)
+    payload = _saved_response(out)
+
+    item = next(i for i in payload["item"] if i["linkId"] == "gout.treatment_priorities")
+    ranks = [
+        (a["valueCoding"]["code"], a["extension"][0]["valueDecimal"])
+        for a in item["answer"]
+    ]
+    assert ranks == [
+        ("pain_relief", 1),
+        ("prevention", 2),
+        ("uric_acid", 3),
+    ], f"got {ranks}"
+
+
+@pytest.mark.e2e
+def test_standalone_grid_round_trips(serve_fixture, page: Page) -> None:
+    """Grid not nested in a repeating group: each row cell selection serializes
+    as a child item under the grid parent."""
+    url, out = serve_fixture("gout_checkin")
+    page.goto(url)
+
+    # joint_severity has 6 rows × 4 columns (None/Mild/Moderate/Severe).
+    # Pick a mix of severity values.
+    _select_grid_cell(
+        page, "gout.joint_severity", "gout.joint_severity.r0", "Severe"
+    )
+    _select_grid_cell(
+        page, "gout.joint_severity", "gout.joint_severity.r1", "Mild"
+    )
+    _select_grid_cell(
+        page, "gout.joint_severity", "gout.joint_severity.r2", "None"
+    )
+    _submit(page)
+    payload = _saved_response(out)
+
+    grid = next(i for i in payload["item"] if i["linkId"] == "gout.joint_severity")
+    rows = {c["linkId"]: c["answer"][0]["valueCoding"]["code"] for c in grid["item"]}
+    assert rows["gout.joint_severity.r0"] == "3"
+    assert rows["gout.joint_severity.r1"] == "1"
+    assert rows["gout.joint_severity.r2"] == "0"
+
+
+# ------------------------------------------------------------------
+# End-to-end submission round-trips (fill remaining ⚪ cells in the
+# "End-to-end submission flow" table of renderer-coverage.md)
+# ------------------------------------------------------------------
+
+@pytest.mark.e2e
+@pytest.mark.skipif(not _has_quickq, reason="quickq not installed")
+def test_gout_multi_type_round_trips_into_typed_columns(
+    serve_fixture, page: Page, tmp_path: Path
+) -> None:
+    """Fill date, boolean, numeric, multiple_choice, slider, ranked, grid, and
+    text in one gout submission; assert each lands in the correct typed column."""
+    from quickq.schema import init_oltp, open_oltp
+    from quickq.parser_fhir import import_fhir
+    from quickq.parser_fhir_response import import_fhir_response
+
+    url, out = serve_fixture("gout_checkin")
+    page.goto(url)
+
+    _fill_date(page, "gout.last_attack_date", "2026-04-15")
+    _fill_numeric(page, "gout.attacks_12mo", 3)
+    _check_multiple(page, "gout.attack_joints", ["Big toe", "Ankle"])
+    _select_grid_cell(page, "gout.joint_severity", "gout.joint_severity.r0", "Severe")
+    _select_boolean(page, "gout.on_ult", True)
+    _fill_numeric(page, "gout.uric_acid", 7.2)
+    _fill_slider(page, "gout.pain_vas", 6)
+    _set_ranked_position(page, "gout.treatment_priorities", "Reducing pain", 1)
+    _fill_text(page, "gout.notes", "Symptoms improving.")
+    _submit(page)
+    payload = _saved_response(out)
+
+    db = tmp_path / "study.db"
+    conn = init_oltp(str(db))
+    import_fhir(conn, (FIXTURES / "gout_checkin_fhir_questionnaire.json").read_text())
+    conn.commit()
+    session_id = import_fhir_response(conn, payload)
+    conn.commit()
+
+    conn = open_oltp(str(db))
+    n_flags = conn.execute(
+        "SELECT COUNT(*) FROM data_quality_flag WHERE session_id = ? AND severity='error'",
+        (session_id,),
+    ).fetchone()[0]
+    assert n_flags == 0, f"expected no error flags, got {n_flags}"
+
+    rows = conn.execute(
+        """
+        SELECT q.link_id, r.response_text, r.response_numeric, r.response_date, r.option_id
+        FROM response r
+        JOIN questionnaire_question qq ON r.qq_id = qq.qq_id
+        JOIN question q ON qq.question_id = q.question_id
+        WHERE r.session_id = ?
+        """,
+        (session_id,),
+    ).fetchall()
+    # One link_id may appear multiple times (multi_choice, ranked, grid)
+    by_link: dict[str, list[tuple]] = {}
+    for link_id, text, num, date, opt in rows:
+        by_link.setdefault(link_id, []).append((text, num, date, opt))
+
+    assert by_link["gout.last_attack_date"][0][2] == "2026-04-15"
+    assert by_link["gout.on_ult"][0][0] == "true"
+    assert by_link["gout.attacks_12mo"][0][1] == 3
+    assert by_link["gout.uric_acid"][0][1] == 7.2
+    assert by_link["gout.pain_vas"][0][1] == 6
+    assert by_link["gout.notes"][0][0] == "Symptoms improving."
+    # multi-choice: 2 rows for attack_joints (big_toe, ankle)
+    assert len(by_link["gout.attack_joints"]) == 2
+    conn.close()
+
+
+@pytest.mark.e2e
+@pytest.mark.skipif(not _has_quickq, reason="quickq not installed")
+def test_grid_in_repeating_imports_per_instance_grid_cells(
+    serve_fixture, page: Page, tmp_path: Path
+) -> None:
+    """Closes the renderer-coverage cell for the grid-in-repeating import
+    path: drive the form, submit, import, and assert each grid cell lands in
+    `response` with the correct repeat_index + grid_row_id + grid_column_id.
+
+    NOTE: schema is loaded via the YAML loader rather than import_fhir
+    because import_fhir currently drops the grid type when a grid is nested
+    inside a repeating group (stores it as `text` with no grid_row/column
+    rows). That's a separate import_fhir bug worth filing — for this test
+    we just want a correctly-loaded schema to exercise the response import.
+    """
+    from quickq.schema import init_oltp, open_oltp
+    from quickq.loader import load_yaml
+    from quickq.parser_fhir_response import import_fhir_response
+
+    url, out = serve_fixture("repeating_with_grid")
+    page.goto(url)
+
+    _fill_numeric(page, "rg.visit_count", 2)
+    _fill_numeric(page, "rg.visits[0]:rg.visits.week", 1)
+    _select_grid_cell(
+        page, "rg.visits[0]:rg.visits.severity",
+        "rg.visits[0]:rg.visits.severity.r0", "None",
+    )
+    _add_repeating_instance(page, "rg.visits")
+    _fill_numeric(page, "rg.visits[1]:rg.visits.week", 2)
+    _select_grid_cell(
+        page, "rg.visits[1]:rg.visits.severity",
+        "rg.visits[1]:rg.visits.severity.r0", "Severe",
+    )
+    _submit(page)
+    payload = _saved_response(out)
+
+    yaml_src = Path(__file__).resolve().parents[2].parent / "quickq" / "tests" / "fixtures" / "repeating_with_grid.yaml"
+    db = tmp_path / "study.db"
+    conn = init_oltp(str(db))
+    load_yaml(conn, str(yaml_src))
+    conn.commit()
+    session_id = import_fhir_response(conn, payload)
+    conn.commit()
+
+    conn = open_oltp(str(db))
+    rows = list(conn.execute(
+        """
+        SELECT q.link_id, r.repeat_index, r.grid_row_id, r.grid_column_id
+        FROM response r
+        JOIN questionnaire_question qq ON r.qq_id = qq.qq_id
+        JOIN question q ON qq.question_id = q.question_id
+        WHERE r.session_id = ? AND r.grid_row_id IS NOT NULL
+        ORDER BY r.repeat_index, r.grid_row_id
+        """,
+        (session_id,),
+    ).fetchall())
+    grid_rows = [tuple(r) for r in rows]
+    assert len(grid_rows) == 2, f"expected 2 grid-cell rows, got {grid_rows}"
+    assert {r[1] for r in grid_rows} == {0, 1}
+    conn.close()
 
 
 # ------------------------------------------------------------------
