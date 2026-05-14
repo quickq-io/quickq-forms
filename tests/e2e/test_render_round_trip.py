@@ -765,16 +765,9 @@ def test_grid_in_repeating_imports_per_instance_grid_cells(
 ) -> None:
     """Closes the renderer-coverage cell for the grid-in-repeating import
     path: drive the form, submit, import, and assert each grid cell lands in
-    `response` with the correct repeat_index + grid_row_id + grid_column_id.
-
-    NOTE: schema is loaded via the YAML loader rather than import_fhir
-    because import_fhir currently drops the grid type when a grid is nested
-    inside a repeating group (stores it as `text` with no grid_row/column
-    rows). That's a separate import_fhir bug worth filing — for this test
-    we just want a correctly-loaded schema to exercise the response import.
-    """
+    `response` with the correct repeat_index + grid_row_id + grid_column_id."""
     from quickq.schema import init_oltp, open_oltp
-    from quickq.loader import load_yaml
+    from quickq.parser_fhir import import_fhir
     from quickq.parser_fhir_response import import_fhir_response
 
     url, out = serve_fixture("repeating_with_grid")
@@ -795,10 +788,12 @@ def test_grid_in_repeating_imports_per_instance_grid_cells(
     _submit(page)
     payload = _saved_response(out)
 
-    yaml_src = Path(__file__).resolve().parents[2].parent / "quickq" / "tests" / "fixtures" / "repeating_with_grid.yaml"
     db = tmp_path / "study.db"
     conn = init_oltp(str(db))
-    load_yaml(conn, str(yaml_src))
+    import_fhir(
+        conn,
+        (FIXTURES / "repeating_with_grid_fhir_questionnaire.json").read_text(),
+    )
     conn.commit()
     session_id = import_fhir_response(conn, payload)
     conn.commit()
